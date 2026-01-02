@@ -19,23 +19,27 @@ class Imagemin {
     register(patterns, copyOptions = {}, imageminOptions = {}) {
         patterns = [].concat(patterns);
         
-        // Extract context from copyOptions since it's no longer valid at the plugin level
-        const context = copyOptions.context;
-        delete copyOptions.context; // Remove from copyOptions
+        // Extract pattern-specific options from copyOptions
+        const { context, to, from, ...validPluginOptions } = copyOptions;
         
-        // Normalize patterns for new API and apply context to each pattern
+        // Normalize patterns for new API and apply pattern-specific options
         const normalizedPatterns = patterns.map(pattern => {
             if (typeof pattern === 'string') {
-                return { 
-                    from: pattern,
-                    ...(context && { context: context })
-                };
+                const patternObj = { from: pattern };
+                
+                // Apply copyOptions to pattern if not already specified
+                if (context && !patternObj.context) patternObj.context = context;
+                if (to && !patternObj.to) patternObj.to = to;
+                
+                return patternObj;
             } else {
-                // If pattern is already an object, add context if not already specified
-                return {
-                    ...pattern,
-                    ...(context && !pattern.context && { context: context })
-                };
+                // If pattern is already an object, merge with copyOptions
+                const patternObj = { ...pattern };
+                
+                if (context && !patternObj.context) patternObj.context = context;
+                if (to && !patternObj.to) patternObj.to = to;
+                
+                return patternObj;
             }
         });
         
@@ -45,10 +49,11 @@ class Imagemin {
     
         this.tasks = this.tasks || [];
     
-        // Use new API format - options should only contain valid plugin options
+        // Use new API format - options should only contain valid plugin-level options
+        // For copy-webpack-plugin v12, valid options are: { concurrency }
         this.tasks.push( new CopyWebpackPlugin({ 
             patterns: normalizedPatterns,
-            options: copyOptions  // This should now be clean of context
+            options: validPluginOptions  // Should only contain concurrency or be empty
         }) );
         this.tasks.push( new ImageminPlugin(imageminOptions) );
         this.tasks.push( new ManifestPlugin(normalizedPatterns) );
