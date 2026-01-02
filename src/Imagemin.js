@@ -18,6 +18,15 @@ class Imagemin {
 
     register(patterns, copyOptions = {}, imageminOptions = {}) {
         patterns = [].concat(patterns);
+
+        // Normalize patterns for new API
+        const normalizedPatterns = patterns.map(pattern => {
+            if (typeof pattern === 'string') {
+                return { from: pattern };
+            }
+            return pattern;
+        });
+
         copyOptions = copyOptions;
         imageminOptions = Object.assign({
             test: /\.(jpe?g|png|gif|svg)$/i,
@@ -25,9 +34,9 @@ class Imagemin {
 
         this.tasks = this.tasks || [];
 
-        this.tasks.push( new CopyWebpackPlugin(patterns, copyOptions) );
+        this.tasks.push( new CopyWebpackPlugin({ patterns: normalizedPatterns, options: copyOptions }) );
         this.tasks.push( new ImageminPlugin(imageminOptions) );
-        this.tasks.push( new ManifestPlugin(patterns) );
+        this.tasks.push( new ManifestPlugin(normalizedPatterns) );
     }
 
     webpackPlugins() {
