@@ -19,6 +19,7 @@
     "multimatch": "^4.0.0"
   },
   "peerDependencies": {
-    "laravel-mix": ">=2.1"
+    "laravel-mix": ">=2.1",
+    "copy-webpack-plugin": ">=6.0.0"
   }
 }
